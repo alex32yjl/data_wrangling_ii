@@ -1,0 +1,94 @@
+---
+title: "Reading data from the web"
+output: github_document
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+
+library(rvest)
+library(httr)
+```
+
+## Scrape a table from website 
+read in html 
+```{r data import}
+url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+drug_use_html = read_html(url)
+
+drug_use_html
+```
+
+extract the table 
+```{r}
+drug_use_html %>%
+  html_nodes(css = "table")
+
+table_marj = 
+  drug_use_html %>% 
+  html_nodes(css = "table") %>% 
+  first() %>%
+  html_table() %>%
+  slice(-1) %>%  #remove the first row of every column
+  as_tibble()
+```
+
+## learning assessment 
+create a data frame that contains the cost of living table for NY
+```{r}
+ny_livingcost = 
+  read_html("https://www.bestplaces.net/cost_of_living/city/new_york/new_york") %>%
+  html_nodes(css = "table") %>%
+  .[[1]] %>%   #A whole matrix can be accessed using [[]] 
+  html_table(header = TRUE)
+```
+
+
+## Star Wars Movie info 
+```{r}
+swm_html = 
+  read_html("https://www.imdb.com/list/ls070150896/")
+```
+
+Grab element
+```{r}
+title_vec = 
+  swm_html %>%
+  html_nodes(".lister-item-header a") %>%
+  html_text()
+
+gross_rev_vec = 
+  swm_html %>%
+  html_nodes(".text-small:nth-child(7) span:nth-child(5)") %>%
+  html_text()
+
+runtime_vec = 
+  swm_html %>%
+  html_nodes(".runtime") %>%
+  html_text()
+
+swm_df = 
+  tibble(
+    title = title_vec,
+    rev = gross_rev_vec,
+    runtime = runtime_vec)
+```
+
+## API
+request API
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") %>% 
+  content("parsed")
+```
+
+```{r}
+brfss_smart2010 = 
+  GET("https://chronicdata.cdc.gov/resource/acme-vg9e.csv",
+      query = list("$limit" = 5000)) %>% 
+  content("parsed")
+```
+
+
+```{r}
+```
